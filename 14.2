@@ -11,17 +11,11 @@ library(foreach)
 library(readr)
 test_filenames = list.files(pattern = "blogData_test")
 
-
-
 train = fread("blogData_train.csv")
-
 
 test = foreach(i = 1:length(test_filenames), .combine = rbind) %do% { temp = fread(test_filenames[i], header = F)
 
 }
-
-
-
 
 train[, V281 := log(1 + V281)]
 
@@ -34,12 +28,9 @@ train[, (drop) := NULL ]
 
 test[, (drop) := NULL]
 
-
-
 write.csv(train, "Blogdata_train.csv", row.names = F)
 
 write.csv(test, "BlogFeedback_test.csv", row.names= F)
-
 
 library(data.table)
 
@@ -48,7 +39,6 @@ library(MatrixModels)
 library(e1071)
 
 library(FNN)
-
 
 train_x = model.Matrix(V281 ~ . - 1, data = train, sparse = F)
 
@@ -62,13 +52,9 @@ train_xgb = xgb.DMatrix(data = as.matrix(train_x), label = train_y)
           
 pred_knn = knn.reg(train_x, test_x, train_y, k = 19)$pred mse(pred_knn, test_y)
 
-
-
 pred_rf = predict(mdl_rf, test)
 
 mse(pred_rf$predictions, test_y)
-
-
 test_x = model.Matrix(V281 ~ . - 1, data = test, sparse = F)
           
 test_x_sparse = model.Matrix(V281 ~ . - 1, data = test, sparse = T)
@@ -77,36 +63,27 @@ train_y = train$V281
           
 test_y = test$V281
           
-
-          
 cv_index = 1:nrow(train)
          
  cv_index_split = split(cv_index, cut(seq_along(cv_index), k, labels = FALSE))
           
-        
  meta_knn_test = rep(0, nrow(test))
           
-         
- meta_knn_train = foreach(i = 1:k, .combine = c) %do% {
+meta_knn_train = foreach(i = 1:k, .combine = c) %do% {
       
          
- train_index = setdiff(1:nrow(train), cv_index_split[[i]])
+train_index = setdiff(1:nrow(train), cv_index_split[[i]])
           
          
- train_set1 = model.Matrix(V281 ~ . - 1, data = train[train_index], sparse = T)
+train_set1 = model.Matrix(V281 ~ . - 1, data = train[train_index], sparse = T)
           
-         
- train_set2 = model.Matrix(V281 ~ . - 1, data = train[cv_index_split[[i]]], sparse = T)
+train_set2 = model.Matrix(V281 ~ . - 1, data = train[cv_index_split[[i]]], sparse = T)
           
-        
- meta _pred = knn.reg(train_set1, train_set2, train[train_index]$V281, k = 19 )$pred
+meta _pred = knn.reg(train_set1, train_set2, train[train_index]$V281, k = 19 )$pred
           
-          
-         
  meta_knn_test = meta_knn_test + knn.reg(train_set1, test_x_sparse, train[tr ain_index]$V281, k = 19)$pred / k
           
-         
- return(meta_pred)
+  return(meta_pred)
           }
           
       
